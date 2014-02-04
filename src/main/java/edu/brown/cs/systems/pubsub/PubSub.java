@@ -1,6 +1,7 @@
 package edu.brown.cs.systems.pubsub;
 
 import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
@@ -10,6 +11,7 @@ import akka.contrib.pattern.DistributedPubSubExtension;
 import akka.contrib.pattern.DistributedPubSubMediator;
 
 public class PubSub {
+  private static AtomicInteger seed = new AtomicInteger();
   
   public interface Message extends Serializable {}
 
@@ -20,12 +22,16 @@ public class PubSub {
   private static ActorSystem system = Settings.getActorSystem();
   private static ActorRef mediator = DistributedPubSubExtension.get(system).mediator();
   
+  public static void Initialize() {
+    // For now do nothing, but this triggers static initialization
+  }
+  
   public static void publish(String topic, Message message) {
     mediator.tell(new DistributedPubSubMediator.Publish(topic, message), null);
   }
   
   public static void subscribe(String topic, Callback callback) {
-    system.actorOf(Props.create(Subscriber.class, topic, callback), "Subscriber");
+    system.actorOf(Props.create(Subscriber.class, topic, callback), "Subscriber"+seed.getAndIncrement());
   }
   
   private static class Subscriber extends UntypedActor {

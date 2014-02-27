@@ -79,51 +79,19 @@ public class Settings {
         return ConfigFactory.parseString(builder.toString()).withFallback(conf);
     }
     
-    public static String getLocalAddress(Config conf) {
-        for (String candidate : conf.getStringList(PUBSUB_HOSTNAME_KEY)) {
-            if (isAddressOrMachineLocal(candidate))
-                return candidate;
-        }
-        try {
-            return InetAddress.getLocalHost().getHostAddress();
-        } catch (UnknownHostException e) {
-            return  "127.0.0.1";
-        }
-    }
-    
     public static List<Integer> getCandidatePorts(Config conf) {
         List<Integer> ports = conf.getIntList(PUBSUB_PORTS_KEY);
         ports.add(0);
         return ports;
     }
 
-    public static boolean isAddressOrMachineLocal(String addr) {
-        try {
-            return isIPAddressLocal(InetAddress.getByName(addr));
-        } catch (UnknownHostException e) {
-            System.out.println("UnknownHostException: " + addr);
-            return false;
-        }
-    }
-
-    public static boolean isIPAddressLocal(InetAddress addr) {
-        if (addr.isAnyLocalAddress() || addr.isLoopbackAddress())
-            return true;
-
-        try {
-            return NetworkInterface.getByInetAddress(addr) != null;
-        } catch (SocketException e) {
-            return false;
-        }
-    }
-    
     public static void printPubSubConfig(Config conf) {
-        String prt = "PubSub seed hosts: ";
-        for (String host : conf.getStringList(PUBSUB_HOSTNAME_KEY))
-            prt += host + " ";
-        prt += "\nPubSub seed ports: ";
+        String str = PUBSUB_SEED_HOSTNAME_KEY + "=" + conf.getString(PUBSUB_SEED_HOSTNAME_KEY) + "\n";
+        str = PUBSUB_HOSTNAME_KEY + "=" + conf.getString(PUBSUB_HOSTNAME_KEY) + "\n";
+        str += PUBSUB_PORTS_KEY + "=[ ";
         for (Integer port : conf.getIntList(PUBSUB_PORTS_KEY))
-            prt += port + " ";
+            str += port;
+        str +="]";
         System.out.println(prt);
     }
 

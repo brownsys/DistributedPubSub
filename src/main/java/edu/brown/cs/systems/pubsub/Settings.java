@@ -29,12 +29,12 @@ public class Settings {
         Config loadedConfig = Settings.withSeedNodes(ConfigFactory.load());
         printPubSubConfig(loadedConfig);
         
-        // Get this machine's IP address and a list of seed node ports
-        String ip = Settings.getLocalAddress(loadedConfig);
-        List<Integer> seeds = Settings.getCandidatePorts(loadedConfig);
+        // Get this machine's hostname and ports to try
+        String ip = loadedConfig.getString("pubsub.hostname");
+        List<Integer> ports = Settings.getCandidatePorts(loadedConfig);
         
-        // Try to start on one of the seed ports
-        for (Integer port : seeds) {
+        // Try to start on one of the ports
+        for (Integer port : ports) {
             try {
                 return createActorSystem(ip, port, loadedConfig);
             } catch (Exception e) {
@@ -60,21 +60,19 @@ public class Settings {
     
     public static Config withSeedNodes(Config conf) {
         StringBuilder builder = new StringBuilder();
-        List<String> hosts = conf.getStringList("pubsub.hosts");
+        String seed = conf.getString("pubsub.seed-hostname");
         List<Integer> ports = conf.getIntList("pubsub.ports");
         builder.append("akka.cluster.seed-nodes=[");
         boolean first = true;
-        for (String host : hosts) {
-            for (Integer port : ports) {
-                if (!first)
-                    builder.append(",");
-                first = false;
-                builder.append("\"akka.tcp://PubSub@");
-                builder.append(host);
-                builder.append(":");
-                builder.append(port);
-                builder.append("\"");
-            }
+        for (Integer port : ports) {
+            if (!first)
+                builder.append(",");
+            first = false;
+            builder.append("\"akka.tcp://PubSub@");
+            builder.append(seed);
+            builder.append(":");
+            builder.append(port);
+            builder.append("\"");
         }
         builder.append("]");
         return ConfigFactory.parseString(builder.toString()).withFallback(conf);

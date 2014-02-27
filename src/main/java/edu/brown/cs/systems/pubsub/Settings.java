@@ -90,7 +90,7 @@ public class Settings {
         str = PUBSUB_HOSTNAME_KEY + "=" + conf.getString(PUBSUB_HOSTNAME_KEY) + "\n";
         str += PUBSUB_PORTS_KEY + "=[ ";
         for (Integer port : conf.getIntList(PUBSUB_PORTS_KEY))
-            str += port;
+            str += port + " ";
         str +="]";
         System.out.println(str);
     }

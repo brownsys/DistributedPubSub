@@ -92,7 +92,7 @@ public class Settings {
         for (Integer port : conf.getIntList(PUBSUB_PORTS_KEY))
             str += port;
         str +="]";
-        System.out.println(prt);
+        System.out.println(str);
     }
 
 }

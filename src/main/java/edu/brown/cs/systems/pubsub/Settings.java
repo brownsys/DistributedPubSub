@@ -13,8 +13,9 @@ import com.typesafe.config.ConfigFactory;
 
 public class Settings {
     
-    private static final String PUBSUB_HOSTS_KEY = "pubsub.hosts";
+    private static final String PUBSUB_HOSTNAME_KEY = "pubsub.hostname";
     private static final String PUBSUB_PORTS_KEY = "pubsub.ports";
+    private static final String PUBSUB_SEED_HOSTNAME_KEY= "pubsub.seed-hostname";
 
     /**
      * Gets the PubSub actor system.
@@ -30,7 +31,7 @@ public class Settings {
         printPubSubConfig(loadedConfig);
         
         // Get this machine's hostname and ports to try
-        String ip = loadedConfig.getString("pubsub.hostname");
+        String ip = loadedConfig.getString(PUBSUB_HOSTNAME_KEY);
         List<Integer> ports = Settings.getCandidatePorts(loadedConfig);
         
         // Try to start on one of the ports
@@ -60,8 +61,8 @@ public class Settings {
     
     public static Config withSeedNodes(Config conf) {
         StringBuilder builder = new StringBuilder();
-        String seed = conf.getString("pubsub.seed-hostname");
-        List<Integer> ports = conf.getIntList("pubsub.ports");
+        String seed = conf.getString(PUBSUB_SEED_HOSTNAME_KEY);
+        List<Integer> ports = conf.getIntList(PUBSUB_PORTS_KEY);
         builder.append("akka.cluster.seed-nodes=[");
         boolean first = true;
         for (Integer port : ports) {
@@ -79,7 +80,7 @@ public class Settings {
     }
     
     public static String getLocalAddress(Config conf) {
-        for (String candidate : conf.getStringList(PUBSUB_HOSTS_KEY)) {
+        for (String candidate : conf.getStringList(PUBSUB_HOSTNAME_KEY)) {
             if (isAddressOrMachineLocal(candidate))
                 return candidate;
         }
@@ -118,7 +119,7 @@ public class Settings {
     
     public static void printPubSubConfig(Config conf) {
         String prt = "PubSub seed hosts: ";
-        for (String host : conf.getStringList(PUBSUB_HOSTS_KEY))
+        for (String host : conf.getStringList(PUBSUB_HOSTNAME_KEY))
             prt += host + " ";
         prt += "\nPubSub seed ports: ";
         for (Integer port : conf.getIntList(PUBSUB_PORTS_KEY))

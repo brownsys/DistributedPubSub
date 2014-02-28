@@ -26,6 +26,16 @@ public class PubSub {
     // For now do nothing, but this triggers static initialization
   }
   
+  static {
+      // Shut down the actor system on shutdown
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+          @Override
+          public void run(){
+              system.shutdown();
+          }
+      });
+  }
+  
   public static void publish(String topic, Message message) {
     mediator.tell(new DistributedPubSubMediator.Publish(topic, message), null);
   }

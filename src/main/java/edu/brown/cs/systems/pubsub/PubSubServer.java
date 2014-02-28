@@ -24,6 +24,7 @@ public class PubSubServer {
             subscriber.bind(String.format("tcp://0.0.0.0:%d", Settings.CLIENT_PUBLISH_PORT));
             subscriber.subscribe("".getBytes());
             
+            System.out.println("PubSub server started");
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] envelope = subscriber.recv(0);
                 byte[] bytes = subscriber.recv(0);

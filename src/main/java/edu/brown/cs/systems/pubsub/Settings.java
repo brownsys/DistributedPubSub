@@ -87,7 +87,7 @@ public class Settings {
 
     public static void printPubSubConfig(Config conf) {
         String str = PUBSUB_SEED_HOSTNAME_KEY + "=" + conf.getString(PUBSUB_SEED_HOSTNAME_KEY) + "\n";
-        str = PUBSUB_HOSTNAME_KEY + "=" + conf.getString(PUBSUB_HOSTNAME_KEY) + "\n";
+        str += PUBSUB_HOSTNAME_KEY + "=" + conf.getString(PUBSUB_HOSTNAME_KEY) + "\n";
         str += PUBSUB_PORTS_KEY + "=[ ";
         for (Integer port : conf.getIntList(PUBSUB_PORTS_KEY))
             str += port + " ";

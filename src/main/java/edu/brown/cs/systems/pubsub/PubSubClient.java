@@ -96,6 +96,7 @@ public class PubSubClient {
                                 c.OnMessage(m);
                             } catch (Exception e) {
                                 System.out.println("Exception calling callback for message: " + m);
+                                e.printStackTrace();
                             }
                         }
                     }

@@ -12,10 +12,9 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
 public class Settings {
-    
-    private static final String PUBSUB_HOSTNAME_KEY = "pubsub.hostname";
+
+    private static final String PUBSUB_HOSTNAMES_KEY = "pubsub.hostnames";
     private static final String PUBSUB_PORTS_KEY = "pubsub.ports";
-    private static final String PUBSUB_SEED_HOSTNAME_KEY= "pubsub.seed-hostname";
 
     /**
      * Gets the PubSub actor system.
@@ -31,7 +30,7 @@ public class Settings {
         printPubSubConfig(loadedConfig);
         
         // Get this machine's hostname and ports to try
-        String ip = loadedConfig.getString(PUBSUB_HOSTNAME_KEY);
+        String ip = getLocalAddress(loadedConfig);
         List<Integer> ports = Settings.getCandidatePorts(loadedConfig);
         
         // Try to start on one of the ports
@@ -61,22 +60,36 @@ public class Settings {
     
     public static Config withSeedNodes(Config conf) {
         StringBuilder builder = new StringBuilder();
-        String seed = conf.getString(PUBSUB_SEED_HOSTNAME_KEY);
+        List<String> hostnames = conf.getStringList(PUBSUB_HOSTNAMES_KEY);
         List<Integer> ports = conf.getIntList(PUBSUB_PORTS_KEY);
         builder.append("akka.cluster.seed-nodes=[");
         boolean first = true;
-        for (Integer port : ports) {
-            if (!first)
-                builder.append(",");
-            first = false;
-            builder.append("\"akka.tcp://PubSub@");
-            builder.append(seed);
-            builder.append(":");
-            builder.append(port);
-            builder.append("\"");
+        for (String hostname : hostnames) {
+            for (Integer port : ports) {
+                if (!first)
+                    builder.append(",");
+                first = false;
+                builder.append("\"akka.tcp://PubSub@");
+                builder.append(hostname);
+                builder.append(":");
+                builder.append(port);
+                builder.append("\"");
+            }
         }
         builder.append("]");
         return ConfigFactory.parseString(builder.toString()).withFallback(conf);
+    }
+    
+    public static String getLocalAddress(Config conf) {
+        for (String candidate : conf.getStringList(PUBSUB_HOSTNAMES_KEY)) {
+            if (isAddressOrMachineLocal(candidate))
+                return candidate;
+        }
+        try {
+            return InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            return  "127.0.0.1";
+        }
     }
     
     public static List<Integer> getCandidatePorts(Config conf) {
@@ -85,9 +98,32 @@ public class Settings {
         return ports;
     }
 
+    public static boolean isAddressOrMachineLocal(String addr) {
+        try {
+            return isIPAddressLocal(InetAddress.getByName(addr));
+        } catch (UnknownHostException e) {
+            System.out.println("UnknownHostException: " + addr);
+            return false;
+        }
+    }
+
+    public static boolean isIPAddressLocal(InetAddress addr) {
+        if (addr.isAnyLocalAddress() || addr.isLoopbackAddress())
+            return true;
+
+        try {
+            return NetworkInterface.getByInetAddress(addr) != null;
+        } catch (SocketException e) {
+            return false;
+        }
+    }
+
     public static void printPubSubConfig(Config conf) {
-        String str = PUBSUB_SEED_HOSTNAME_KEY + "=" + conf.getString(PUBSUB_SEED_HOSTNAME_KEY) + "\n";
-        str += PUBSUB_HOSTNAME_KEY + "=" + conf.getString(PUBSUB_HOSTNAME_KEY) + "\n";
+        String str = "";
+        str += PUBSUB_HOSTNAMES_KEY + "=[ ";
+        for (String hostname : conf.getStringList(PUBSUB_HOSTNAMES_KEY))
+            str += hostname + " ";
+        str +="]";
         str += PUBSUB_PORTS_KEY + "=[ ";
         for (Integer port : conf.getIntList(PUBSUB_PORTS_KEY))
             str += port + " ";

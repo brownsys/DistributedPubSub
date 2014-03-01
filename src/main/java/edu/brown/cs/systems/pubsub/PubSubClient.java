@@ -87,11 +87,11 @@ public class PubSubClient {
                     byte[] envelope = subscriber.recv(0);
                     byte[] bytes = subscriber.recv(0);
                     String topic = new String(envelope);
-                    ObjectInput oi = new ObjectInputStream(new ByteArrayInputStream(bytes));
-                    Message m = (Message) oi.readObject();
                     synchronized(callbacks) {
                         Collection<Callback> tocall = callbacks.get(topic);
                         for (Callback c : tocall) {
+                            ObjectInput oi = new ObjectInputStream(new ByteArrayInputStream(bytes));
+                            Message m = (Message) oi.readObject();
                             try {
                                 c.OnMessage(m);
                             } catch (Exception e) {

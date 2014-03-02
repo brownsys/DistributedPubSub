@@ -45,7 +45,7 @@ public class PubSubClient {
             subscriber.connect(String.format("tcp://%s:%d", Settings.SERVER_HOSTNAME, Settings.CLIENT_SUBSCRIBE_PORT));
             subscribe_thread.setDaemon(true);
             subscribe_thread.start();
-            System.out.println(String.format("Subscribing to tcp://%s:%d", Settings.SERVER_HOSTNAME, Settings.CLIENT_PUBLISH_PORT));
+            System.out.println(String.format("Subscribing to tcp://%s:%d", Settings.SERVER_HOSTNAME, Settings.CLIENT_SUBSCRIBE_PORT));
         }
     }
 

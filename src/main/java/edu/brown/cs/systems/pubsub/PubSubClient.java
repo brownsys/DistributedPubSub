@@ -34,6 +34,7 @@ public class PubSubClient {
             publisher = context.socket(ZMQ.PUB);
             publisher.connect(String.format("tcp://%s:%d", Settings.SERVER_HOSTNAME, Settings.CLIENT_PUBLISH_PORT));
             publisher.setHWM(Settings.OUTGOING_MESSAGE_BUFFER_SIZE);
+            System.out.println(String.format("Publishing to tcp://%s:%d", Settings.SERVER_HOSTNAME, Settings.CLIENT_PUBLISH_PORT));
         }
     }
     
@@ -44,6 +45,7 @@ public class PubSubClient {
             subscriber.connect(String.format("tcp://%s:%d", Settings.SERVER_HOSTNAME, Settings.CLIENT_SUBSCRIBE_PORT));
             subscribe_thread.setDaemon(true);
             subscribe_thread.start();
+            System.out.println(String.format("Subscribing to tcp://%s:%d", Settings.SERVER_HOSTNAME, Settings.CLIENT_PUBLISH_PORT));
         }
     }
 

@@ -24,7 +24,8 @@ public class PubSubServer {
             subscriber.bind(String.format("tcp://0.0.0.0:%d", Settings.CLIENT_PUBLISH_PORT));
             subscriber.subscribe("".getBytes());
             
-            System.out.println("PubSub server started");
+            System.out.println(String.format("PubSub server listening for messages at 0.0.0.0:%d", Settings.CLIENT_PUBLISH_PORT));
+            System.out.println(String.format("PubSub server accepting subscriptions at 0.0.0.0:%d", Settings.CLIENT_SUBSCRIBE_PORT));
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] envelope = subscriber.recv(0);
                 byte[] bytes = subscriber.recv(0);

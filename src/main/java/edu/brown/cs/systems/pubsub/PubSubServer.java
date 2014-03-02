@@ -20,12 +20,12 @@ public class PubSubServer {
             
             ZMQ.Socket subscriber = context.socket(ZMQ.SUB);
 
-            publisher.bind(String.format("tcp://0.0.0.0:%d", Settings.CLIENT_SUBSCRIBE_PORT));
-            subscriber.bind(String.format("tcp://0.0.0.0:%d", Settings.CLIENT_PUBLISH_PORT));
+            publisher.bind(String.format("tcp://%s:%d", Settings.SERVER_BIND_ADDRESS, Settings.CLIENT_SUBSCRIBE_PORT));
+            subscriber.bind(String.format("tcp://%s:%d", Settings.SERVER_BIND_ADDRESS, Settings.CLIENT_PUBLISH_PORT));
             subscriber.subscribe("".getBytes());
             
-            System.out.println(String.format("PubSub server listening for messages at 0.0.0.0:%d", Settings.CLIENT_PUBLISH_PORT));
-            System.out.println(String.format("PubSub server accepting subscriptions at 0.0.0.0:%d", Settings.CLIENT_SUBSCRIBE_PORT));
+            System.out.println(String.format("PubSub server listening for messages at %s:%d", Settings.SERVER_BIND_ADDRESS, Settings.CLIENT_PUBLISH_PORT));
+            System.out.println(String.format("PubSub server accepting subscriptions at %s:%d", Settings.SERVER_BIND_ADDRESS, Settings.CLIENT_SUBSCRIBE_PORT));
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] envelope = subscriber.recv(0);
                 byte[] bytes = subscriber.recv(0);

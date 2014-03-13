@@ -1,0 +1,8 @@
+package pubsub;
+
+option java_package = "edu.brown.cs.systems.pubsub";
+option java_outer_classname = "PubSubProtos";
+
+message StringMessage {
+  required string message = 1;
+}

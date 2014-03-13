@@ -1,27 +1,65 @@
 package edu.brown.cs.systems.pubsub;
 
-import java.io.Serializable;
-import java.util.concurrent.atomic.AtomicInteger;
+import org.zeromq.ZMQ;
+
+import com.google.protobuf.Message;
+
+import edu.brown.cs.systems.pubsub.Subscriber.Callback;
 
 public class PubSub {
-  private static AtomicInteger seed = new AtomicInteger();
   
-  public interface Message extends Serializable {}
+  public static final ZMQ.Context context = ZMQ.context(Settings.ZMQ_THREADS);
+  
+  private static Subscriber default_subscriber = null;
+  private static Publisher default_publisher = null;  
+  
+  
+  private static synchronized void create_default_publisher() {
+    if (default_publisher==null)
+      default_publisher = new Publisher(Settings.SERVER_HOSTNAME, Settings.CLIENT_PUBLISH_PORT);
+  }
+  
+  private static synchronized void create_default_subscriber() {
+    if (default_subscriber==null)
+      default_subscriber = new Subscriber(Settings.SERVER_HOSTNAME, Settings.CLIENT_SUBSCRIBE_PORT);
+  }
+  
+  /**
+   * Returns the default subscriber, whose settings are determined by the config
+   */
+  public static Subscriber subscriber() {
+    if (default_subscriber==null)
+      create_default_subscriber();
+    return default_subscriber;
+  }
+  
+  /**
+   * Returns the default publisher, whose settings are determined by the config
+   */
+  public static Publisher publisher() {
+    if (default_publisher==null)
+      create_default_publisher();
+    return default_publisher;
+  }
+  
+  /**
+   * Subscribes to the specified topic, registering the provided callback, using
+   * the default subscriber.
+   * @param topic the topic to subscribe to
+   * @param callback the callback to register
+   */
+  public static void subscribe(String topic, Callback<?> callback) {
+    subscriber().subscribe(topic, callback);
+  }
 
-  public static abstract class Callback {
-    protected abstract void OnMessage(Message m);
-  }
-  
-  public static void Initialize() {
-    // For now do nothing, but this triggers static initialization
-  }
-  
+
+  /**
+   * Publishes to the specified topic and message using the default publisher
+   * @param topic the topic to publish on
+   * @param message the message to publish
+   */
   public static void publish(String topic, Message message) {
-    PubSubClient.publish(topic, message);
-  }
-  
-  public static void subscribe(String topic, Callback callback) {
-    PubSubClient.subscribe(topic, callback);
+    publisher().publish(topic, message);
   }
   
 }

@@ -16,12 +16,12 @@ public class PubSub {
   
   private static synchronized void create_default_publisher() {
     if (default_publisher==null)
-      default_publisher = new Publisher(Settings.SERVER_HOSTNAME, Settings.CLIENT_PUBLISH_PORT);
+      default_publisher = new Publisher();
   }
   
   private static synchronized void create_default_subscriber() {
     if (default_subscriber==null)
-      default_subscriber = new Subscriber(Settings.SERVER_HOSTNAME, Settings.CLIENT_SUBSCRIBE_PORT);
+      default_subscriber = new Subscriber();
   }
   
   /**

@@ -11,6 +11,14 @@ public class Publisher {
   /** The address that this publisher publishes to */
   public final String address;
   private final ZMQ.Socket socket;
+  
+  /**
+   * Creates a publisher that publishes to the default
+   * hostname and port, as specified in the application conf
+   */
+  public Publisher() {
+    this(Settings.SERVER_HOSTNAME, Settings.CLIENT_PUBLISH_PORT);
+  }
 
   /**
    * Create a publisher that publishes to a specific url

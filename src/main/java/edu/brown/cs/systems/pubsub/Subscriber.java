@@ -52,6 +52,16 @@ public class Subscriber extends Thread {
 
   public final String address;
   private final ZMQ.Socket socket;
+  
+  /**
+   * Creates a new subscriber that connects to the pub sub server at
+   * the hostname and port specified by the application conf.  The
+   * subscriber thread is started by the constructor and will call
+   * any registered callbacks.
+   */
+  public Subscriber() {
+    this(Settings.SERVER_HOSTNAME, Settings.CLIENT_SUBSCRIBE_PORT);
+  }
 
   /**
    * Creates a new subscriber that connects to the pub sub server at the

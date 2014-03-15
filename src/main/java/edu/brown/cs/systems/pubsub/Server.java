@@ -7,7 +7,20 @@ public class Server extends Thread {
 
   public final String address_in;
   public final String address_out;
+  
+  /**
+   * Creates a new server using the default settings taken from the application config.
+   */
+  public Server() {
+    this(Settings.SERVER_BIND_ADDRESS, Settings.CLIENT_SUBSCRIBE_PORT, Settings.CLIENT_PUBLISH_PORT);
+  }
 
+  /**
+   * Creates a new server using the specified server settings
+   * @param bind_address The address to bind the server to (default 0.0.0.0; all interfaces)
+   * @param client_subscribe_port The port for clients to subscribe to 
+   * @param client_publish_port The port for clients to publish to
+   */
   public Server(String bind_address, int client_subscribe_port, int client_publish_port) {
     address_in = String.format("tcp://%s:%d", bind_address, client_publish_port);
     address_out = String.format("tcp://%s:%d", bind_address, client_subscribe_port);

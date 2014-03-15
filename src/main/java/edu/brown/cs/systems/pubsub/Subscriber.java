@@ -22,16 +22,13 @@ public class Subscriber extends Thread {
       Parser<T> parser = null;
       try {
         Class<?> cl = getClass();
-        System.out.println("Current class is " + cl);
         while (!Callback.class.equals(cl.getSuperclass())) {
             // case of multiple inheritance, we are trying to get the first available generic info
             if (cl.getGenericSuperclass() instanceof ParameterizedType) {
                 break;
             }
             cl = cl.getSuperclass();
-            System.out.println("Current class is " + cl);
         }
-        System.out.println("Generic superclass is " + cl.getGenericSuperclass());
         Class<T> type = ((Class<T>) ((ParameterizedType) cl.getGenericSuperclass()).getActualTypeArguments()[0]);
         parser = (Parser<T>) type.getDeclaredField("PARSER").get(null);
       } catch(Exception e) {

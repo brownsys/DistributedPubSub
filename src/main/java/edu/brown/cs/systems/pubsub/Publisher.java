@@ -46,6 +46,13 @@ public class Publisher {
       socket.send(payload, 0);      
     }
   }
+  
+  /**
+   * Close the publisher
+   */
+  public void close() {
+    socket.close();
+  }
 
   public static void main(String[] args) throws InterruptedException {
     String server_hostname = Settings.SERVER_HOSTNAME;

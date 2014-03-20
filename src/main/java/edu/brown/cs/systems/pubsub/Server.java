@@ -14,6 +14,13 @@ public class Server extends Thread {
   public Server() {
     this(Settings.SERVER_BIND_ADDRESS, Settings.CLIENT_SUBSCRIBE_PORT, Settings.CLIENT_PUBLISH_PORT);
   }
+  
+  /**
+   * Interrupts the pub sub server thread, telling it to stop
+   */
+  public void shutdown() {
+    this.interrupt();
+  }
 
   /**
    * Creates a new server using the specified server settings

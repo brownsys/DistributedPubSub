@@ -13,4 +13,5 @@ public class Settings {
     public static final int CLIENT_PUBLISH_PORT =           CONFIG.getInt("pubsub.client-publish-port");
     public static final int CLIENT_SUBSCRIBE_PORT =         CONFIG.getInt("pubsub.client-subscribe-port");
     public static final int ZMQ_THREADS =                   CONFIG.getInt("pubsub.threads");
+    
 }

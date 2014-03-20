@@ -87,6 +87,10 @@ public class Subscriber extends Thread {
     registerCallback(topic, callback);
     socket.subscribe(topic.getBytes());
   }
+  
+  public void close() {
+    this.interrupt();
+  }
 
   private static final Map<String, Collection<Callback<?>>> callbacks = new HashMap<String, Collection<Callback<?>>>();
 
@@ -99,6 +103,7 @@ public class Subscriber extends Thread {
       onMessage(topic, bytes);
     }
     socket.close();
+    System.out.println("Subscriber closed.");
   }
 
   private synchronized void registerCallback(String topic, Callback<?> callback) {

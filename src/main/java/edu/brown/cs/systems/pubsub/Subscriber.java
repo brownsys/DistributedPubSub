@@ -1,13 +1,11 @@
 package edu.brown.cs.systems.pubsub;
 
 import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Arrays;
 
 import org.zeromq.ZMQ;
 
+import com.google.common.collect.HashMultimap;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
@@ -84,41 +82,64 @@ public class Subscriber extends Thread {
    * @param callback the callback to call when messages are received
    */
   public void subscribe(String topic, Callback<?> callback) {
-    registerCallback(topic, callback);
-    socket.subscribe(topic.getBytes());
+    this.subscribe(topic.getBytes(), callback);
+  }
+
+  /**
+   * Subscribes to the specified topic, and registers the provided callback to
+   * be called for each new message on the topic
+   * @param topic the name of the topic to subscribe to
+   * @param callback the callback to call when messages are received
+   */
+  public void subscribe(byte[] topic, Callback<?> callback) {
+    synchronized(this) {
+      callbacks.put(Arrays.hashCode(topic), callback);
+      socket.subscribe(topic);
+    }
+  }
+  
+  /**
+   * Unsubscribes from the specified topic
+   * @param topic
+   * @param callback
+   */
+  public void unsubscribe(String topic, Callback<?> callback) {
+    this.unsubscribe(topic.getBytes(), callback);
+  }
+  
+  public void unsubscribe(byte[] topic, Callback<?> callback) {
+    int topichash = Arrays.hashCode(topic);
+    synchronized(this) {
+      callbacks.remove(topichash, callback);
+      if (callbacks.get(topichash).isEmpty()) {
+        socket.unsubscribe(topic);
+      }
+    }
   }
   
   public void close() {
     this.interrupt();
   }
-
-  private static final Map<String, Collection<Callback<?>>> callbacks = new HashMap<String, Collection<Callback<?>>>();
+  
+  private static final HashMultimap<Integer, Callback<?>> callbacks = HashMultimap.create();
 
   @Override
   public void run() {
     while (!Thread.currentThread().isInterrupted()) {
-      byte[] envelope = socket.recv(0);
-      byte[] bytes = socket.recv(0);
-      String topic = new String(envelope);
-      onMessage(topic, bytes);
+      try {
+        byte[] topic = socket.recv(0);
+        byte[] bytes = socket.recv(0);
+        onMessage(topic, bytes);
+      } catch (Exception e) {
+        // squelch;
+      }
     }
     socket.close();
     System.out.println("Subscriber closed.");
   }
 
-  private synchronized void registerCallback(String topic, Callback<?> callback) {
-    Collection<Callback<?>> topic_callbacks = callbacks.get(topic);
-    if (topic_callbacks == null)
-      topic_callbacks = new ArrayList<Callback<?>>();
-    topic_callbacks.add(callback);
-    callbacks.put(topic, topic_callbacks);
-  }
-
-  private synchronized void onMessage(String topic, byte[] payload) {
-    Collection<Callback<?>> tocall = callbacks.get(topic);
-    if (tocall == null)
-      return;
-    for (Callback<?> callback : tocall) {
+  private synchronized void onMessage(byte[] topic, byte[] payload) {
+    for (Callback<?> callback : callbacks.get(Arrays.hashCode(topic))) {
       try {
         callback.OnMessage(payload);
       } catch (Exception e) {

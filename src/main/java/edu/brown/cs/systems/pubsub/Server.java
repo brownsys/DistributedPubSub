@@ -50,16 +50,9 @@ public class Server extends Thread {
     System.out.println("PubSub server messages out @ " + address_out);
     
     // Proxy messages
-    while (!Thread.currentThread().isInterrupted()) {
-      byte[] envelope = subscriber.recv(0);
-      byte[] bytes = subscriber.recv(0);
-      publisher.send(envelope, ZMQ.SNDMORE);
-      publisher.send(bytes, 0);
-    }
-
-    // Once interrupted, shut ourselves down
-    publisher.close();
-    subscriber.close();
+    ZMQ.proxy(subscriber, publisher, null);
+    
+    PubSub.context.close();
   }
 
   public static void main(String[] args) throws InterruptedException {

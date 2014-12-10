@@ -39,10 +39,18 @@ public class Publisher {
    * @param message the protobuf message to publish
    */
   public void publish(String topic, Message message) {
-    byte[] envelope = topic.getBytes();
+    publish(topic.getBytes(), message);
+  }
+  
+  /**
+   * Publishes a protocol buffers message on a topic
+   * @param topic the byte representation of the topic
+   * @param message the protobuf message to publish
+   */
+  public void publish(byte[] topic, Message message) {
     byte[] payload = message.toByteArray();
     synchronized(socket) {
-      socket.send(envelope, ZMQ.SNDMORE);
+      socket.send(topic, ZMQ.SNDMORE);
       socket.send(payload, 0);      
     }
   }

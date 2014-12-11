@@ -12,7 +12,7 @@ Depends on:
 REQUIRED INSTALLATION:
 
 * Protocol Buffers
-	- Install protocol buffers (and make sure the protoc executable is on your PATH): http://code.google.com/p/protobuf/downloads/list
+	- Install protocol buffers 2.5.0 http://code.google.com/p/protobuf/downloads/list
 	- Ensure the protoc executable is on your PATH (test with 'protoc --version')
 	
 OPTIONAL INSTALLATION

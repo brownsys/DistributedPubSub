@@ -11,9 +11,23 @@ Depends on:
 
 REQUIRED INSTALLATION:
 
-* Protocol Buffers
+* Protocol Buffers 2.5.0
+ 	- Note that the protocol buffers version provided by your operating system might be an earlier version
 	- Install protocol buffers 2.5.0 http://code.google.com/p/protobuf/downloads/list
+	
+		```	
+		apt-get remove protobuf-compiler
+		curl -# -O https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
+		gunzip protobuf-2.5.0.tar.gz
+		tar -xvf protobuf.2.5.0.tar
+		cd protobuf-2.5.0
+		./configure --prefix=/usr
+		make
+		make install
+		```
 	- Ensure the protoc executable is on your PATH (test with 'protoc --version')
+	
+
 	
 OPTIONAL INSTALLATION
 

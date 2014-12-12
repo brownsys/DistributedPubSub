@@ -11,8 +11,16 @@ public class PubSub {
   public static final ZMQ.Context context = ZMQ.context(Settings.ZMQ_THREADS);
   
   private static Subscriber default_subscriber = null;
-  private static Publisher default_publisher = null;  
+  private static Publisher default_publisher = null;
   
+  public static synchronized void shutdown() {
+	  if (default_publisher!=null)
+		  default_publisher.close();
+	  if (default_subscriber!=null)
+		  default_subscriber.close();
+	  context.close();
+	  context.term();
+  }
   
   private static synchronized void create_default_publisher() {
     if (default_publisher==null)

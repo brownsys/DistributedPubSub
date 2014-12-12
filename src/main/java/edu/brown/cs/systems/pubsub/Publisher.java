@@ -11,7 +11,8 @@ public class Publisher {
   /** The address that this publisher publishes to */
   public final String address;
   private final ZMQ.Socket socket;
-  
+  private boolean closed;
+
   /**
    * Creates a publisher that publishes to the default
    * hostname and port, as specified in the application conf
@@ -29,10 +30,20 @@ public class Publisher {
     socket = PubSub.context.socket(ZMQ.PUB);
     address = String.format("tcp://%s:%d", hostname, port);
     socket.connect(address);
+    closed = false;
     socket.setHWM(Settings.OUTGOING_MESSAGE_BUFFER_SIZE);
-    System.out.println("Publisher publishing to " + address);
+    socket.setLinger(200);
+
+    // Sleep for 200ms to prevent slow joiners.
+    // Could be solved more elegantly but not for now.
+    try {
+      Thread.sleep(200);
+    } catch (InterruptedException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
   }
-  
+
   /**
    * Publishes a protocol buffers message on a topic
    * @param topic the name of the topic to publish to
@@ -41,7 +52,7 @@ public class Publisher {
   public void publish(String topic, Message message) {
     publish(topic.getBytes(), message);
   }
-  
+
   /**
    * Publishes a protocol buffers message on a topic
    * @param topic the byte representation of the topic
@@ -50,16 +61,21 @@ public class Publisher {
   public void publish(byte[] topic, Message message) {
     byte[] payload = message.toByteArray();
     synchronized(socket) {
-      socket.send(topic, ZMQ.SNDMORE);
-      socket.send(payload, 0);      
+      if (!closed) {
+        socket.send(topic, ZMQ.SNDMORE);
+        socket.send(payload, 0);
+      }
     }
   }
-  
+
   /**
    * Close the publisher
    */
   public void close() {
-    socket.close();
+    synchronized(socket) {
+      closed = true;
+      socket.close();
+    }
   }
 
   public static void main(String[] args) throws InterruptedException {

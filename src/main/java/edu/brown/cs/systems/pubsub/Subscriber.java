@@ -49,6 +49,7 @@ public class Subscriber extends Thread {
   }
 
   public final String address;
+  private final ZMQ.Context zmq;
   private final ZMQ.Socket socket;
   
   /**
@@ -67,7 +68,8 @@ public class Subscriber extends Thread {
    * constructor, and will call any registered callbacks
    */
   public Subscriber(String hostname, int port) {
-    socket = PubSub.context.socket(ZMQ.SUB);
+    zmq = ZMQ.context(1);
+    socket = zmq.socket(ZMQ.SUB);
     address = String.format("tcp://%s:%d", hostname, port);
     socket.connect(address);
     setDaemon(true);
@@ -135,6 +137,7 @@ public class Subscriber extends Thread {
       }
     }
     socket.close();
+    zmq.close();
     System.out.println("Subscriber closed.");
   }
 

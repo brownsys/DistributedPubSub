@@ -10,8 +10,8 @@ public class Publisher {
 
   /** The address that this publisher publishes to */
   public final String address;
+  private final ZMQ.Context zmq;
   private final ZMQ.Socket socket;
-  private boolean closed;
 
   /**
    * Creates a publisher that publishes to the default
@@ -27,10 +27,10 @@ public class Publisher {
    * @param port the port to publish to
    */
   public Publisher(String hostname, int port) {
-    socket = PubSub.context.socket(ZMQ.PUB);
+    zmq = ZMQ.context(1);
+    socket = zmq.socket(ZMQ.PUB);
     address = String.format("tcp://%s:%d", hostname, port);
     socket.connect(address);
-    closed = false;
     socket.setHWM(Settings.OUTGOING_MESSAGE_BUFFER_SIZE);
     socket.setLinger(200);
 
@@ -61,10 +61,8 @@ public class Publisher {
   public void publish(byte[] topic, Message message) {
     byte[] payload = message.toByteArray();
     synchronized(socket) {
-      if (!closed) {
-        socket.send(topic, ZMQ.SNDMORE);
-        socket.send(payload, 0);
-      }
+      socket.send(topic, ZMQ.SNDMORE);
+      socket.send(payload, 0);
     }
   }
 
@@ -73,8 +71,8 @@ public class Publisher {
    */
   public void close() {
     synchronized(socket) {
-      closed = true;
       socket.close();
+      zmq.close();
     }
   }
 

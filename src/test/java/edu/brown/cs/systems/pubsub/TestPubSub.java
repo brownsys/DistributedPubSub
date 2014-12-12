@@ -6,6 +6,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
+import org.zeromq.ZMQ;
 
 import edu.brown.cs.systems.pubsub.PubSubProtos.StringMessage;
 import edu.brown.cs.systems.pubsub.Subscriber.Callback;
@@ -18,7 +19,7 @@ public class TestPubSub {
   @Test
   public void testAZMQ() {
     try {
-      if (PubSub.context != null) {
+      if (ZMQ.context(1) != null) {
         System.out.println("ZMQ Binding successful");
       }
     } catch (Exception e) {

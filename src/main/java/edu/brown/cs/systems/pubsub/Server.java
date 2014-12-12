@@ -1,6 +1,7 @@
 package edu.brown.cs.systems.pubsub;
 
 import org.zeromq.ZMQ;
+import org.zeromq.ZMQ.Context;
 import org.zeromq.ZMQ.Socket;
 
 public class Server extends Thread {
@@ -35,13 +36,15 @@ public class Server extends Thread {
 
   @Override
   public void run() {    
+    Context zmq = ZMQ.context(1);
+    
     // Create subscriber
-    Socket subscriber = PubSub.context.socket(ZMQ.SUB);
+    Socket subscriber = zmq.socket(ZMQ.SUB);
     subscriber.bind(address_in);
     subscriber.subscribe("".getBytes());
     
     // Create publisher
-    Socket publisher = PubSub.context.socket(ZMQ.PUB);
+    Socket publisher = zmq.socket(ZMQ.PUB);
     publisher.setHWM(Settings.OUTGOING_MESSAGE_BUFFER_SIZE);
     publisher.bind(address_out);
 
@@ -52,7 +55,9 @@ public class Server extends Thread {
     // Proxy messages
     ZMQ.proxy(subscriber, publisher, null);
     
-    PubSub.context.close();
+    subscriber.close();
+    publisher.close();
+    zmq.close();
   }
 
   public static void main(String[] args) throws InterruptedException {

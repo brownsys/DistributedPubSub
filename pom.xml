@@ -4,7 +4,7 @@
   <groupId>edu.brown.cs.systems</groupId>
   <artifactId>pubsub</artifactId>
   <packaging>jar</packaging>
-  <version>1.0</version>
+  <version>2.0</version>
   <name>pubsub</name>
   <dependencies>
     <dependency>
@@ -34,31 +34,6 @@
       <version>17.0</version>
     </dependency>
   </dependencies>
-  <profiles>
-    <profile>
-      <id>native</id>
-      <dependencies>
-        <dependency>
-          <groupId>org.zeromq</groupId>
-          <artifactId>jzmq</artifactId>
-          <version>3.0.1</version>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>java</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>org.zeromq</groupId>
-          <artifactId>jeromq</artifactId>
-          <version>0.3.4</version>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
   <build>
     <plugins>
       <plugin>

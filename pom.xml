@@ -88,14 +88,6 @@
               <mainClass>edu.brown.cs.systems.pubsub.Server</mainClass>
               <name>server</name>
             </program>
-            <program>
-              <mainClass>edu.brown.cs.systems.pubsub.Publisher</mainClass>
-              <name>test-publisher</name>
-            </program>
-            <program>
-              <mainClass>edu.brown.cs.systems.pubsub.Subscriber</mainClass>
-              <name>test-subscriber</name>
-            </program>
           </programs>
         </configuration>
         <executions>

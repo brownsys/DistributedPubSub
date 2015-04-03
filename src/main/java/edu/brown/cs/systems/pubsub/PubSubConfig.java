@@ -33,8 +33,6 @@ public class PubSubConfig {
 		public final int receiveBufferSize;
 		public final int sendBufferSize;
 		public final int oversizeBufferSize;
-		public final String subscribeTopic;
-		public final String unsubscribeTopic;
 		
 		public Server(Config config) {
 			this.address = config.getString("address");
@@ -43,8 +41,6 @@ public class PubSubConfig {
 			this.receiveBufferSize = config.getInt("receive-buffer-size");
 			this.sendBufferSize = config.getInt("send-buffer-size");
 			this.oversizeBufferSize = config.getInt("oversize-buffer-size");
-			this.subscribeTopic = config.getString("subscribe-topic");
-			this.unsubscribeTopic = config.getString("unsubscribe-topic");
 		}
 		
 		/** @return the server address from the default config */
@@ -75,18 +71,7 @@ public class PubSubConfig {
 		/** @return the buffer size to use for oversized messages that are skipped */
 		public static int oversizeBufferSize() {
 			return c().server.oversizeBufferSize;
-		}
-
-		/** @return the topic for subscribe requests to be sent on */
-		public static String subscribetopic() {
-			return c().server.subscribeTopic;
-		}
-		
-		/** @return the topic for unsubscribe requests to be sent on */
-		public static String unsubscribetopic() {
-			return c().server.unsubscribeTopic;
-		}
-		
+		}		
 	}
 
 	/** PubSub client config */

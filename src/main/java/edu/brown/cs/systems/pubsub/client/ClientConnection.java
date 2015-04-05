@@ -169,14 +169,14 @@ class ClientConnection extends Thread {
           while (outgoingHeader.hasRemaining()) {
             int numWritten = channel.write(outgoingHeader);
             if (numWritten == 0)
-              break;
+              return false;
           }
 
           // Write as much of the message as possible
           while (outgoingMessage.hasRemaining()) {
             int numWritten = channel.write(outgoingMessage);
             if (numWritten == 0)
-              break;
+              return false;
           }
 
           // Done, clear the message
@@ -218,7 +218,7 @@ class ClientConnection extends Thread {
           while (sizePrefixBuffer.hasRemaining()) {
             int numRead = channel.read(sizePrefixBuffer);
             if (numRead == 0) {
-              break;
+              return false;
             } else if (numRead == -1) {
               return true;
             }
@@ -232,10 +232,10 @@ class ClientConnection extends Thread {
           }
 
           // Read into the buffer
-          while (!incomingMessage.hasRemaining()) {
+          while (incomingMessage.hasRemaining()) {
             int numRead = channel.read(incomingMessage);
             if (numRead == 0) {
-              break;
+              return false;
             } else if (numRead == -1) {
               return true;
             }

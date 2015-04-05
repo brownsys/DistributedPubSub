@@ -85,7 +85,7 @@
           <extraJvmArguments>-Xmx64m</extraJvmArguments>
           <programs>
             <program>
-              <mainClass>edu.brown.cs.systems.pubsub.Server</mainClass>
+              <mainClass>edu.brown.cs.systems.pubsub.server.PubSubServer</mainClass>
               <name>server</name>
             </program>
           </programs>

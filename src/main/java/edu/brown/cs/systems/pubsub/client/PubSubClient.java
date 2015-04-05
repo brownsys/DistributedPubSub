@@ -7,6 +7,7 @@ import com.google.protobuf.Message;
 
 import edu.brown.cs.systems.pubsub.PubSubConfig;
 import edu.brown.cs.systems.pubsub.PubSubProtos.Header;
+import edu.brown.cs.systems.pubsub.PubSubProtos.StringMessage;
 
 public class PubSubClient {
 
@@ -25,6 +26,8 @@ public class PubSubClient {
     this.connection = new ClientConnection(this, serverHostName, serverPort);
     this.pending = new PublishBuffer(maxPendingBytes);
     this.subscriptions = new Subscriptions();
+    
+    this.init();
   }
 
   void init() {
@@ -43,7 +46,7 @@ public class PubSubClient {
     });
   }
 
-  void close() throws InterruptedException {
+  public void close() throws InterruptedException {
     if (connection.isAlive()) {
       System.out.println("Interrupting ClientConnection");
       connection.interrupt();
@@ -125,6 +128,22 @@ public class PubSubClient {
     } catch (Exception e) {
 
     }
+  }
+  
+  public static void main(String[] args) throws InterruptedException, IOException {
+    PubSubClient client = new PubSubClient();
+    client.subscribe("jon", new Callback<StringMessage>(){
+
+      @Override
+      protected void OnMessage(StringMessage message) {
+        System.out.println("Received " + message.getMessage());
+      }});
+    while (!Thread.currentThread().isInterrupted()) {
+      client.publish("jon", StringMessage.newBuilder().setMessage("hi").build());
+      Thread.sleep(1000);
+    }
+    
+    Thread.sleep(Integer.MAX_VALUE);
   }
 
 }

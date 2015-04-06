@@ -1,17 +1,17 @@
-package edu.brown.cs.systems.pubsub.client;
+package edu.brown.cs.systems.pubsub.client.impl;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.Queues;
 
-class PublishBuffer {
+class ClientPublishBuffer {
 
   private final int maxPendingBytes;
   private final BlockingQueue<byte[]> q = Queues.newLinkedBlockingQueue();
   private final AtomicInteger pendingBytes = new AtomicInteger();
   
-  PublishBuffer(int maxPendingBytes) {
+  ClientPublishBuffer(int maxPendingBytes) {
     this.maxPendingBytes = maxPendingBytes;
   }
   

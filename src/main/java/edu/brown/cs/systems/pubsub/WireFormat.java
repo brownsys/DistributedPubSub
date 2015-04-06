@@ -1,4 +1,4 @@
-package edu.brown.cs.systems.pubsub.client;
+package edu.brown.cs.systems.pubsub;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -13,48 +13,39 @@ import com.google.protobuf.Parser;
 
 import edu.brown.cs.systems.pubsub.PubSubProtos.Header;
 
-class WireFormat {
-  
-  static byte[] publish(String topic, Message message) {
-    return publish(ByteString.copyFromUtf8(topic), message);
+/** Creates wire format pubsub messages.  Public, but API is subject to change */
+public class WireFormat {
+
+  public static ByteString topic(String topic) {
+    return ByteString.copyFromUtf8(topic);
   }
-  
-  static byte[] publish(ByteString topic, Message message) {
+
+  public static ByteString topic(byte[] topic) {
+    return ByteString.copyFrom(topic);
+  }
+
+  public static byte[] publish(ByteString topic, Message message) {
     Header header = Header.newBuilder()
-        .setMessageType(Header.MessageType.PUBLISH)
-        .setTopic(topic)
-        .build();
+        .setMessageType(Header.MessageType.PUBLISH).setTopic(topic).build();
 
     return serialize(header, message);
   }
-  
-  static byte[] subscribe(String topic) {
-    return subscribe(ByteString.copyFromUtf8(topic));
-  }
-  
-  static byte[] subscribe(ByteString topic) {
+
+  public static byte[] subscribe(ByteString topic) {
     Header header = Header.newBuilder()
-        .setMessageType(Header.MessageType.SUBSCRIBE)
-        .setTopic(topic)
-        .build();
-    
+        .setMessageType(Header.MessageType.SUBSCRIBE).setTopic(topic).build();
+
     return serialize(header);
   }
-  
-  static byte[] unsubscribe(String topic) {
-    return unsubscribe(ByteString.copyFromUtf8(topic));
-  }
-  
-  static byte[] unsubscribe(ByteString topic) {
+
+  public static byte[] unsubscribe(ByteString topic) {
     Header header = Header.newBuilder()
-        .setMessageType(Header.MessageType.UNSUBSCRIBE)
-        .setTopic(topic)
-        .build();
-    
+        .setMessageType(Header.MessageType.UNSUBSCRIBE).setTopic(topic).build();
+
     return serialize(header);
   }
-  
-  static byte[] serialize(Header header, Message message) {
+
+  public static byte[] serialize(Header header, Message message) {
     // Calculate the size of the outgoing message
     int headerlen = header.getSerializedSize();
     int messagelen = message.getSerializedSize();
@@ -65,7 +56,8 @@ class WireFormat {
     // Serialize the message, abort if something goes wrong
     ByteBuffer buf = ByteBuffer.allocate(len);
     buf.putInt(headerlen);
-    CodedOutputStream cos = CodedOutputStream.newInstance(buf.array(), buf.position(), buf.remaining());
+    CodedOutputStream cos = CodedOutputStream.newInstance(buf.array(),
+        buf.position(), buf.remaining());
     try {
       header.writeTo(cos);
       message.writeTo(cos);
@@ -74,17 +66,18 @@ class WireFormat {
     }
     return buf.array();
   }
-  
-  static byte[] serialize(Header header) {
+
+  public static byte[] serialize(Header header) {
     // Calculate the size of the outgoing message
     int headerlen = header.getSerializedSize();
     int len = 4 // header size
-        + headerlen; // header
+    + headerlen; // header
 
     // Serialize the message, abort if something goes wrong
     ByteBuffer buf = ByteBuffer.allocate(len);
     buf.putInt(headerlen);
-    CodedOutputStream cos = CodedOutputStream.newInstance(buf.array(), buf.position(), buf.remaining());
+    CodedOutputStream cos = CodedOutputStream.newInstance(buf.array(),
+        buf.position(), buf.remaining());
     try {
       header.writeTo(cos);
     } catch (IOException e) {
@@ -92,19 +85,21 @@ class WireFormat {
     }
     return buf.array();
   }
-  
-  static Header header(byte[] serialized) throws IOException {
+
+  public static Header header(byte[] serialized) throws IOException {
     ByteBuffer buf = ByteBuffer.wrap(serialized);
     int headerSize = buf.getInt();
     return Header.parseFrom(new ByteArrayInputStream(serialized,
         buf.position(), headerSize));
   }
-  
-  static <T extends Message> T message(byte[] serialized, Parser<T> parser) throws InvalidProtocolBufferException {
+
+  public static <T extends Message> T message(byte[] serialized,
+      Parser<T> parser) throws InvalidProtocolBufferException {
     ByteBuffer buf = ByteBuffer.wrap(serialized);
     int messageBegin = buf.getInt() + buf.position();
     int messageLen = serialized.length - messageBegin;
-    InputStream is = new ByteArrayInputStream(serialized, messageBegin, messageLen);
+    InputStream is = new ByteArrayInputStream(serialized, messageBegin,
+        messageLen);
     return (T) parser.parseFrom(is);
   }
 

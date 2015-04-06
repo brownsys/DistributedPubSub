@@ -1,87 +1,34 @@
-package edu.brown.cs.systems.pubsub.client;
+package edu.brown.cs.systems.pubsub.client.impl;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 
-class ClientConnection extends Thread {
+class ClientConnection implements Runnable {
 
-  // Client interacting with this connection
-  final PubSubClient client;
-
-  // Reconnection parameters
-  private static final int MAX_RECONNECT_INTERVAL = 10000;
-  private static final int MIN_RECONNECT_INTERVAL = 0;
-  private int reconnect = MIN_RECONNECT_INTERVAL;
-
-  // PubSubServer information
-  public final String host;
-  public final int port;
-
-  // Local client variables
+  final PubSubClientImpl client;
   final Selector selector;
+  final SocketChannel channel;
+  final InputReader in;
+  final OutputWriter out;
 
-  ClientConnection(PubSubClient client, String serverHost, int serverPort) throws IOException {
+  ClientConnection(PubSubClientImpl client, Selector selector, SocketChannel channel) {
     this.client = client;
-    this.host = serverHost;
-    this.port = serverPort;
-    this.selector = SelectorProvider.provider().openSelector();
+    this.selector = selector;
+    this.channel = channel;
+    this.in = new InputReader();
+    this.out = new OutputWriter();
   }
 
   @Override
   public void run() {
     try {
-      while (!Thread.currentThread().isInterrupted()) {
-        // If we have a reconnect timeout, wait for it
-        Thread.sleep(reconnect);
-
-        SocketChannel channel = null;
-        try {
-          channel = SocketChannel.open();
-          System.out.println("Attempting connect to " + host + ":" + port);
-          channel.connect(new InetSocketAddress(host, port));
-          channel.configureBlocking(false);
-
-          // On success reset the reconnect timeout and enter connection loop
-          reconnect = 0;
-          connectedLoop(channel);
-
-        } catch (IOException e) {
-          // IOException while trying to establish connection
-          System.out.println("IOException in reconnect loop");
-          e.printStackTrace();
-          reconnect = Math.min(MAX_RECONNECT_INTERVAL, reconnect + 500);
-
-        } finally {
-          if (channel != null) {
-            try {
-              channel.close();
-            } catch (IOException e) {
-              System.out.println("IOException closing channel");
-              e.printStackTrace();
-            }
-          }
-        }
-      }
-    } catch (InterruptedException e) {
-      System.out.println("Client thread interrupted, exiting");
-    }
-  }
-
-  private void connectedLoop(SocketChannel channel) {
-    try {
       // Register channel ops with the selector
       doInterestOps(channel);
-
-      // Create message IO for the channel
-      InputReader in = new InputReader(channel);
-      OutputWriter out = new OutputWriter(channel);
 
       // Trigger client to resubscribe
       client.OnConnect();
@@ -129,7 +76,7 @@ class ClientConnection extends Thread {
     } catch (ClosedSelectorException e) {
       System.out.println("ClientConnection attempt to select on a closed selector");
       e.printStackTrace();
-      this.interrupt();
+      Thread.currentThread().interrupt();
     }
     System.out.println("Connected loop complete");
   }
@@ -143,13 +90,8 @@ class ClientConnection extends Thread {
 
   class OutputWriter {
 
-    final SocketChannel channel;
     private final ByteBuffer outgoingHeader = ByteBuffer.allocate(4);
     private ByteBuffer outgoingMessage = null;
-
-    OutputWriter(SocketChannel channel) {
-      this.channel = channel;
-    }
 
     boolean flush() {
       System.out.println("Doing some flushing");
@@ -198,13 +140,8 @@ class ClientConnection extends Thread {
    */
   class InputReader {
 
-    final SocketChannel channel;
     private final ByteBuffer sizePrefixBuffer = ByteBuffer.allocate(4);
     private ByteBuffer incomingMessage = null;
-
-    InputReader(SocketChannel channel) {
-      this.channel = channel;
-    }
 
     /**
      * Read everything available from the channel. Return true if the connection

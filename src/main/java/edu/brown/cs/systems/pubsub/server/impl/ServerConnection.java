@@ -1,4 +1,4 @@
-package edu.brown.cs.systems.pubsub.server;
+package edu.brown.cs.systems.pubsub.server.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -11,14 +11,14 @@ import com.google.common.collect.Lists;
 
 import edu.brown.cs.systems.pubsub.PubSubProtos.Header;
 
-class ConnectedClient {
+class ServerConnection {
 
-  final PubSubServer pubsub;
+  final PubSubServerImpl pubsub;
   final SocketChannel channel;
   private final Incoming incoming;
   private final Outgoing outgoing;
 
-  ConnectedClient(PubSubServer pubsub, SocketChannel channel) {
+  ServerConnection(PubSubServerImpl pubsub, SocketChannel channel) {
     this.pubsub = pubsub;
     this.channel = channel;
     this.incoming = new Incoming();
@@ -60,7 +60,7 @@ class ConnectedClient {
             if (numRead == 0) {
               return;
             } else if (numRead == -1) {
-              pubsub.connections.close(ConnectedClient.this);
+              pubsub.connections.close(ServerConnection.this);
               return;
             }
           }
@@ -81,7 +81,7 @@ class ConnectedClient {
             if (numRead == 0) {
               return;
             } else if (numRead == -1) {
-              pubsub.connections.close(ConnectedClient.this);
+              pubsub.connections.close(ServerConnection.this);
               return;
             }
           }
@@ -91,7 +91,7 @@ class ConnectedClient {
           int headerSize = incomingMessage.getInt();
           byte[] message = incomingMessage.array();
           Header header = Header.parseFrom(new ByteArrayInputStream(message, incomingMessage.position(), headerSize));
-          pubsub.route(ConnectedClient.this, header, message);
+          pubsub.route(ServerConnection.this, header, message);
 
           incomingMessage = null;
           incomingHeader.clear();
@@ -100,12 +100,12 @@ class ConnectedClient {
       } catch (IOException e) {
         System.out.println("IOException routing");
         e.printStackTrace();
-        pubsub.connections.close(ConnectedClient.this);
+        pubsub.connections.close(ServerConnection.this);
         return;
       } catch (BufferUnderflowException e) {
         System.out.println("Bad message");
         e.printStackTrace();
-        pubsub.connections.close(ConnectedClient.this);
+        pubsub.connections.close(ServerConnection.this);
         return;
       }
     }
@@ -168,7 +168,7 @@ class ConnectedClient {
           pubsub.server.interestR(channel);
         }
       } catch (IOException e) {
-        pubsub.connections.close(ConnectedClient.this);
+        pubsub.connections.close(ServerConnection.this);
       }
     }
 

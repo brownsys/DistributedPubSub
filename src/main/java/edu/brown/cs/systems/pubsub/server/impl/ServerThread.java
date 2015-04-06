@@ -1,4 +1,4 @@
-package edu.brown.cs.systems.pubsub.server;
+package edu.brown.cs.systems.pubsub.server.impl;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -9,10 +9,10 @@ import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 
-class ServerConnection extends Thread {
+class ServerThread extends Thread {
 
   // PubSub
-  final PubSubServer pubsub;
+  final PubSubServerImpl pubsub;
 
   // Server information
   final String host;
@@ -20,10 +20,12 @@ class ServerConnection extends Thread {
   final InetSocketAddress address;
 
   // Server socket variables
+  final int rcvBufferSize;
+  final int sndBufferSize;
   private final ServerSocketChannel server;
   private final Selector selector;
 
-  ServerConnection(PubSubServer pubsub, String host, int port) throws IOException {
+  ServerThread(PubSubServerImpl pubsub, String host, int port, int rcvBufferSize, int sndBufferSize) throws IOException {
     this.pubsub = pubsub;
 
     // Determine bind address
@@ -33,9 +35,12 @@ class ServerConnection extends Thread {
     System.out.printf("Resolved %s:%d to %s\n", host, port, address);
 
     // Create the server
+    this.rcvBufferSize = rcvBufferSize;
+    this.sndBufferSize = sndBufferSize;
     this.server = ServerSocketChannel.open();
     this.server.configureBlocking(false);
     this.server.socket().bind(address);
+    this.server.socket().setReceiveBufferSize(rcvBufferSize);
     this.selector = SelectorProvider.provider().openSelector();
     this.server.register(this.selector, SelectionKey.OP_ACCEPT);
   }
@@ -56,9 +61,9 @@ class ServerConnection extends Thread {
             if (key.isAcceptable()) {
               accept(key);
             } else if (key.isReadable()) {
-              ((ConnectedClient) key.attachment()).read();
+              ((ServerConnection) key.attachment()).read();
             } else if (key.isWritable()) {
-              ((ConnectedClient) key.attachment()).flush();
+              ((ServerConnection) key.attachment()).flush();
             }
           }
         }
@@ -81,7 +86,9 @@ class ServerConnection extends Thread {
       ServerSocketChannel serverchannel = (ServerSocketChannel) key.channel();
       SocketChannel channel = serverchannel.accept();
       channel.configureBlocking(false);
-      ConnectedClient client = pubsub.connections.register(channel);
+      channel.socket().setSendBufferSize(sndBufferSize);
+      channel.socket().setReceiveBufferSize(rcvBufferSize);
+      ServerConnection client = pubsub.connections.register(channel);
       channel.register(selector, SelectionKey.OP_READ, client);
       System.out.println("Accepted new connection");
     } catch (IOException e) {

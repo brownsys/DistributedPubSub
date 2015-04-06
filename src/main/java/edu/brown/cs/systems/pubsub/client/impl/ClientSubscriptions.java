@@ -1,4 +1,4 @@
-package edu.brown.cs.systems.pubsub.client;
+package edu.brown.cs.systems.pubsub.client.impl;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -9,7 +9,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import com.google.protobuf.ByteString;
 
-class Subscriptions {
+class ClientSubscriptions {
 
   private final Map<ByteString, Multiset<Callback<?>>> callbacks = Maps.newHashMap();
 

@@ -1,27 +1,27 @@
-package edu.brown.cs.systems.pubsub.server;
+package edu.brown.cs.systems.pubsub.server.impl;
 
 import java.nio.channels.SocketChannel;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
 
-class Connections {
+class ServerConnectionManager {
   
-  final PubSubServer pubsub;
-  final Set<ConnectedClient> connected;
+  final PubSubServerImpl pubsub;
+  final Set<ServerConnection> connected;
   
-  Connections(PubSubServer pubsub) {
+  ServerConnectionManager(PubSubServerImpl pubsub) {
     this.pubsub = pubsub;
     this.connected = Sets.newHashSet();
   }
   
-  ConnectedClient register(SocketChannel channel) {
-    ConnectedClient client = new ConnectedClient(pubsub, channel);
+  ServerConnection register(SocketChannel channel) {
+    ServerConnection client = new ServerConnection(pubsub, channel);
     connected.add(client);
     return client;
   }
   
-  void close(ConnectedClient client) {
+  void close(ServerConnection client) {
     pubsub.subscriptions.unsubscribeAll(client);
     pubsub.server.close(client.channel);
     connected.remove(client);
@@ -29,7 +29,7 @@ class Connections {
   
   void closeAll() {
     pubsub.subscriptions.clear();
-    for (ConnectedClient client : connected) {
+    for (ServerConnection client : connected) {
       pubsub.server.close(client.channel);
     }
     connected.clear();

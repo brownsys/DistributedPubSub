@@ -3,6 +3,7 @@ package edu.brown.cs.systems.pubsub;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
+/** Loads config values using typesafe config */
 public class PubSubConfig {
 	
 	public final Server server;
@@ -32,7 +33,6 @@ public class PubSubConfig {
 		public final String bindto;
 		public final int receiveBufferSize;
 		public final int sendBufferSize;
-		public final int oversizeBufferSize;
 		
 		public Server(Config config) {
 			this.address = config.getString("address");
@@ -40,7 +40,6 @@ public class PubSubConfig {
 			this.bindto = config.getString("bindto");
 			this.receiveBufferSize = config.getInt("receive-buffer-size");
 			this.sendBufferSize = config.getInt("send-buffer-size");
-			this.oversizeBufferSize = config.getInt("oversize-buffer-size");
 		}
 		
 		/** @return the server address from the default config */
@@ -67,11 +66,6 @@ public class PubSubConfig {
 		public static int sendBufferSize() {
 			return c().server.sendBufferSize;
 		}
-		
-		/** @return the buffer size to use for oversized messages that are skipped */
-		public static int oversizeBufferSize() {
-			return c().server.oversizeBufferSize;
-		}		
 	}
 
 	/** PubSub client config */
@@ -79,14 +73,14 @@ public class PubSubConfig {
 		
 		public final int receiveBufferSize;
 		public final int sendBufferSize;
-		public final int receiveMessageBufferSize;
 		public final int sendMessageBufferSize;
+		public final boolean daemon;
 		
 		public Client(Config config) {
 			this.receiveBufferSize = config.getInt("receive-buffer-size");
 			this.sendBufferSize = config.getInt("send-buffer-size");
-			this.receiveMessageBufferSize = config.getInt("rcv-message-buffer-size");
 			this.sendMessageBufferSize = config.getInt("send-message-buffer-size");
+			this.daemon = config.getBoolean("daemon");
 		}
 		
 		/** @return the client receive buffer size */
@@ -99,15 +93,15 @@ public class PubSubConfig {
 			return c().client.sendBufferSize;
 		}
 		
-		/** @return the client message receive buffer size */
-		public static int messageReceiveBufferSize() {
-			return c().client.receiveMessageBufferSize;
-		}
-		
 		/** @return the client message send buffer size */
 		public static int messageSendBufferSize() {
 			return c().client.sendMessageBufferSize;
 		}
+
+		/** @return does the client thread run as a daemon. default true */
+    public static boolean daemon() {
+      return c().client.daemon;
+    }
 		
 	}
 	

@@ -1,149 +1,120 @@
 package edu.brown.cs.systems.pubsub.client;
 
-import java.io.IOException;
-
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
 
-import edu.brown.cs.systems.pubsub.PubSubConfig;
-import edu.brown.cs.systems.pubsub.PubSubProtos.Header;
-import edu.brown.cs.systems.pubsub.PubSubProtos.StringMessage;
+import edu.brown.cs.systems.pubsub.client.impl.Callback;
 
-public class PubSubClient {
+public interface PubSubClient {
 
-  final boolean daemon;
+  /**
+   * Close the client, stopping any threads associated with the client
+   */
+  public void shutdown();
 
-  final ClientConnection connection;
-  final PublishBuffer pending;
-  final Subscriptions subscriptions;
+  /**
+   * Wait for the client thread(s) to terminate. This call will block until
+   * interrupted or the client terminates. Clients should call shutdown first to
+   * shut down the client, if desired.
+   * 
+   * @throws InterruptedException
+   */
+  public void awaitTermination() throws InterruptedException;
 
-  PubSubClient() throws IOException {
-    this(PubSubConfig.Server.address(), PubSubConfig.Server.port(), PubSubConfig.Client.messageSendBufferSize(), true);
-  }
+  /**
+   * Publishes a protocol buffers message on a topic
+   * 
+   * @param topic
+   *          the name of the topic to publish to
+   * @param message
+   *          the protobuf message to publish
+   * @return true if the message was successfully published, false otherwise
+   */
+  public boolean publish(String topic, Message message);
 
-  PubSubClient(String serverHostName, int serverPort, int maxPendingBytes, boolean daemon) throws IOException {
-    this.daemon = daemon;
-    this.connection = new ClientConnection(this, serverHostName, serverPort);
-    this.pending = new PublishBuffer(maxPendingBytes);
-    this.subscriptions = new Subscriptions();
-    
-    this.init();
-  }
+  /**
+   * Publishes a protocol buffers message on a topic
+   * 
+   * @param topic
+   *          the byte representation of the topic
+   * @param message
+   *          the protobuf message to publish
+   * @return true if the message was successfully published, false otherwise
+   */
+  public boolean publish(byte[] topic, Message message);
 
-  void init() {
-    connection.setDaemon(daemon);
-    connection.start();
+  /**
+   * Publishes a protocol buffers message on a topic
+   * 
+   * @param topic
+   *          the byte representation of the topic
+   * @param message
+   *          the protobuf message to publish
+   * @return true if the message was successfully published, false otherwise
+   */
+  public boolean publish(ByteString topic, Message message);
 
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        try {
-          close();
-        } catch (InterruptedException e) {
-          System.out.println("PubSubClient ShutdownHook was " + "interrupted while waiting for ClientConnection termination");
-        }
-      }
-    });
-  }
+  /**
+   * Subscribes to the specified topic, and registers the provided callback to
+   * be called for each new message on the topic
+   * 
+   * @param topic
+   *          the name of the topic to subscribe to
+   * @param callback
+   *          the callback to call when messages are received
+   */
+  public void subscribe(String topic, Callback<?> callback);
 
-  public void close() throws InterruptedException {
-    if (connection.isAlive()) {
-      System.out.println("Interrupting ClientConnection");
-      connection.interrupt();
-      connection.join();
-    }
-  }
+  /**
+   * Subscribes to the specified topic, and registers the provided callback to
+   * be called for each new message on the topic
+   * 
+   * @param topic
+   *          the name of the topic to subscribe to
+   * @param callback
+   *          the callback to call when messages are received
+   */
+  public void subscribe(byte[] topic, Callback<?> callback);
 
-  public boolean publish(String topic, Message message) {
-    // Create the publish message
-    byte[] bytes = WireFormat.publish(topic, message);
-    if (bytes == null)
-      return false;
+  /**
+   * Subscribes to the specified topic, and registers the provided callback to
+   * be called for each new message on the topic
+   * 
+   * @param topic
+   *          the name of the topic to subscribe to
+   * @param callback
+   *          the callback to call when messages are received
+   */
+  public void subscribe(ByteString topic, Callback<?> callback);
 
-    // Try to enqueue the published bytes
-    boolean added = pending.add(bytes);
-    if (added)
-      connection.selector.wakeup();
-    return added;
-  }
+  /**
+   * Unsubscribes from the specified topic
+   * 
+   * @param topic
+   *          the name of the topic to unsubscribe from
+   * @param callback
+   *          the callback to remove
+   */
+  public void unsubscribe(String topic, Callback<?> callback);
 
-  public synchronized void subscribe(String topic, Callback<?> callback) {
-    // Add the subscription
-    boolean first = subscriptions.add(ByteString.copyFromUtf8(topic), callback);
+  /**
+   * Unsubscribes from the specified topic
+   * 
+   * @param topic
+   *          the name of the topic to unsubscribe from
+   * @param callback
+   *          the callback to remove
+   */
+  public void unsubscribe(byte[] topic, Callback<?> callback);
 
-    // If it was the first subscription, send a subscribe message
-    if (!first)
-      return;
-
-    byte[] bytes = WireFormat.subscribe(topic);
-    if (bytes == null) {
-      subscriptions.remove(ByteString.copyFromUtf8(topic), callback);
-      return;
-    }
-
-    pending.force(bytes);
-  }
-
-  public synchronized void unsubscribe(String topic, Callback<?> callback) {
-    // Remove the subscription
-    boolean last = subscriptions.remove(ByteString.copyFromUtf8(topic), callback);
-
-    // If it was the last subscription, send an unsubscribe message
-    if (!last)
-      return;
-
-    byte[] bytes = WireFormat.unsubscribe(topic);
-    if (bytes == null)
-      return;
-
-    pending.force(bytes);
-  }
-
-  // Called by the client connection each time we connect / reconnect to server
-  synchronized void OnConnect() {
-    // Resubscribe to all subscribed topics
-    for (ByteString topic : subscriptions.topics()) {
-      byte[] bytes = WireFormat.subscribe(topic);
-      if (bytes != null)
-        pending.force(bytes);
-    }
-  }
-
-  // Called by the connection each time a message is received
-  synchronized void OnMessage(byte[] message) {
-    try {
-      Header header = WireFormat.header(message);
-      switch (header.getMessageType()) {
-      case PUBLISH:
-        if (header.hasTopic()) {
-          ByteString topic = header.getTopic();
-          for (Callback<?> callback : subscriptions.callbacks(topic)) {
-            callback.OnMessage(message);
-          }
-        }
-        break;
-      default:
-        break;
-      }
-    } catch (Exception e) {
-
-    }
-  }
-  
-  public static void main(String[] args) throws InterruptedException, IOException {
-    PubSubClient client = new PubSubClient();
-    client.subscribe("jon", new Callback<StringMessage>(){
-
-      @Override
-      protected void OnMessage(StringMessage message) {
-        System.out.println("Received " + message.getMessage());
-      }});
-    while (!Thread.currentThread().isInterrupted()) {
-      client.publish("jon", StringMessage.newBuilder().setMessage("hi").build());
-      Thread.sleep(1000);
-    }
-    
-    Thread.sleep(Integer.MAX_VALUE);
-  }
+  /**
+   * Unsubscribes from the specified topic
+   * 
+   * @param topic
+   *          the name of the topic to unsubscribe from
+   * @param callback
+   *          the callback to remove
+   */
+  public void unsubscribe(ByteString topic, Callback<?> callback);
 
 }

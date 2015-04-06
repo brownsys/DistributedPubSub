@@ -1,10 +1,12 @@
-package edu.brown.cs.systems.pubsub.client;
+package edu.brown.cs.systems.pubsub.client.impl;
 
 import java.lang.reflect.ParameterizedType;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
+
+import edu.brown.cs.systems.pubsub.WireFormat;
 
 public abstract class Callback<T extends Message> {
 
@@ -23,7 +25,8 @@ public abstract class Callback<T extends Message> {
         }
         cl = cl.getSuperclass();
       }
-      Class<T> type = ((Class<T>) ((ParameterizedType) cl.getGenericSuperclass()).getActualTypeArguments()[0]);
+      Class<T> type = ((Class<T>) ((ParameterizedType) cl
+          .getGenericSuperclass()).getActualTypeArguments()[0]);
       parser = (Parser<T>) type.getDeclaredField("PARSER").get(null);
     } catch (Exception e) {
       System.out.println("Error: callback creation failed");

@@ -74,8 +74,13 @@ class ClientSubscriptions {
     return new HashSet<ByteString>(callbacks.keySet());
   }
   
-  synchronized Multiset<Callback<?>> callbacks(ByteString topic) {
-    return HashMultiset.create(callbacks.get(topic));
+  synchronized Callback<?>[] callbacks(ByteString topic) {
+    Multiset<Callback<?>> cbs = callbacks.get(topic);
+    if (cbs==null) {
+      return new Callback<?>[0];
+    } else {
+      return cbs.toArray(new Callback<?>[cbs.size()]);
+    }
   }
 
 }

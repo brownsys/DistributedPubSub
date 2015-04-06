@@ -19,19 +19,18 @@ class ClientPublishBuffer {
     int len = message.length;
     
     // Check we can send without violating space restrictions
-    if (pendingBytes.getAndAdd(len) > maxPendingBytes) {
-      pendingBytes.getAndAdd(-len);
+    if (pendingBytes.addAndGet(len) > maxPendingBytes) {
+      pendingBytes.addAndGet(-len);
       return false;
     }
 
     // Enqueue the message
     q.add(message);
-    System.out.println("Added pending");
     return true;
   }
   
   void force(byte[] message) {
-    pendingBytes.getAndAdd(message.length);
+    pendingBytes.addAndGet(message.length);
     q.add(message);
     System.out.println("Forced pending");
   }
@@ -43,7 +42,7 @@ class ClientPublishBuffer {
   void completed() {
     byte[] prev = q.poll();
     if (prev != null) {
-      pendingBytes.getAndAdd(-prev.length);
+      pendingBytes.addAndGet(-prev.length);
     }
   }
 
